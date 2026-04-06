@@ -1,11 +1,11 @@
-using Microsoft.EntityFrameworkCore;
+using CustomerOrder.Domain.Constants;
 using CustomerOrder.Domain.Entities;
 using CustomerOrder.Infrastructure.Persistence.Configurations;
-using CustomerOrder.Domain.Constants;
+using Microsoft.EntityFrameworkCore;
 
 namespace CustomerOrder.Infrastructure.Persistence;
 
-public class CustomerOrderDbContext: DbContext
+public class CustomerOrderDbContext : DbContext
 {
     public CustomerOrderDbContext(DbContextOptions<CustomerOrderDbContext> options) : base(options) { }
 
@@ -22,7 +22,7 @@ public class CustomerOrderDbContext: DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
+
         // Apply entity configurations
         modelBuilder.HasDefaultSchema(ApplicationConstants.ApplicationSchema);
         modelBuilder.ApplyConfiguration(new CustomerConfiguration());

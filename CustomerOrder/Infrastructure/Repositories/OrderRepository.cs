@@ -77,7 +77,11 @@ public class OrderRepository(CustomerOrderDbContext dbContext) : IOrderRepositor
     {
         dbContext.Orders.Add(order);
         int rowCount = await dbContext.SaveChangesAsync();
-        if (noTracking) dbContext.ChangeTracker.Clear();
+        if (noTracking)
+        {
+            dbContext.ChangeTracker.Clear();
+        }
+
         return rowCount > 0;
     }
 
@@ -85,7 +89,11 @@ public class OrderRepository(CustomerOrderDbContext dbContext) : IOrderRepositor
     {
         dbContext.Orders.Update(order);
         int rowCount = await dbContext.SaveChangesAsync();
-        if (noTracking) dbContext.ChangeTracker.Clear();
+        if (noTracking)
+        {
+            dbContext.ChangeTracker.Clear();
+        }
+
         return rowCount > 0;
     }
 
@@ -93,7 +101,9 @@ public class OrderRepository(CustomerOrderDbContext dbContext) : IOrderRepositor
     {
         var order = await dbContext.Orders.FindAsync(orderId);
         if (order == null)
+        {
             return false;
+        }
 
         dbContext.Orders.Remove(order);
         return await dbContext.SaveChangesAsync() > 0;

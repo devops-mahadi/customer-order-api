@@ -47,7 +47,9 @@ public class CustomerService(ICustomerRepository customerRepository) : ICustomer
     {
         var customer = await customerRepository.GetByEmailAsync(email);
         if (customer == null)
+        {
             return false;
+        }
 
         customer.FirstName = request.FirstName;
         customer.LastName = request.LastName;
@@ -61,7 +63,9 @@ public class CustomerService(ICustomerRepository customerRepository) : ICustomer
     {
         var customer = await customerRepository.GetByEmailAsync(email);
         if (customer == null)
+        {
             return false;
+        }
 
         return await customerRepository.DeleteAsync(customer);
     }

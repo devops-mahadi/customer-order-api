@@ -43,7 +43,7 @@ public static class ApplicationConstants
         public const string CustomerNotFound = "Customer with email '{0}' not found";
         public const string CustomerAlreadyExists = "Customer with email '{0}' already exists";
     }
-    
+
     public const string ApplicationSchema = "customerorder";
     public const string MigrationHistoryTable = "__MigrationHistory";
 }

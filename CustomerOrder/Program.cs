@@ -1,3 +1,4 @@
+using System.Text;
 using CustomerOrder.Application.Interfaces;
 using CustomerOrder.Application.Services;
 using CustomerOrder.Domain.Interfaces;
@@ -6,7 +7,6 @@ using CustomerOrder.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 namespace CustomerOrder;
 
@@ -31,7 +31,7 @@ public class Program
         // Register Application Services
         builder.Services.AddScoped<ICustomerService, CustomerService>();
         builder.Services.AddScoped<IOrderService, OrderService>();
-        
+
         // Configure JWT Authentication
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -47,7 +47,7 @@ public class Program
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtKey"]))
                 };
             });
-        
+
         // Set Authorization
         builder.Services.AddAuthorization();
 
@@ -59,11 +59,11 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
 
         var app = builder.Build();
-        
+
         // Apply new migrations if any
         using (var scope = app.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<CustomerOrderDbContext>(); 
+            var dbContext = scope.ServiceProvider.GetRequiredService<CustomerOrderDbContext>();
             dbContext.Database.Migrate();
         }
 

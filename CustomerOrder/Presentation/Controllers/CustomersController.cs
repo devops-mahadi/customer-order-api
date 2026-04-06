@@ -38,7 +38,9 @@ public class CustomersController : ControllerBase
     {
         var customer = await _customerService.GetByEmailAsync(email);
         if (customer == null)
+        {
             return NotFound(new { message = $"Customer with email '{email}' not found" });
+        }
 
         return Ok(customer);
     }
@@ -52,13 +54,17 @@ public class CustomersController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateCustomerRequest request)
     {
         if (!ModelState.IsValid)
+        {
             return BadRequest(ModelState);
+        }
 
         try
         {
             var success = await _customerService.CreateAsync(request);
             if (!success)
+            {
                 return BadRequest(new { message = "Failed to create customer" });
+            }
 
             var customer = await _customerService.GetByEmailAsync(request.Email);
             return CreatedAtAction(nameof(GetByEmail), new { email = request.Email }, customer);
@@ -79,13 +85,17 @@ public class CustomersController : ControllerBase
     public async Task<IActionResult> Update(string email, [FromBody] UpdateCustomerRequest request)
     {
         if (!ModelState.IsValid)
+        {
             return BadRequest(ModelState);
+        }
 
         try
         {
             var success = await _customerService.UpdateAsync(email, request);
             if (!success)
+            {
                 return NotFound(new { message = $"Customer with email '{email}' not found" });
+            }
 
             var customer = await _customerService.GetByEmailAsync(email);
             return Ok(customer);
@@ -106,7 +116,9 @@ public class CustomersController : ControllerBase
     {
         var success = await _customerService.DeleteAsync(email);
         if (!success)
+        {
             return NotFound(new { message = $"Customer with email '{email}' not found" });
+        }
 
         return NoContent();
     }

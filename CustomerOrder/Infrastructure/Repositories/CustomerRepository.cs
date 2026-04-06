@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CustomerOrder.Infrastructure.Repositories;
 
-public class CustomerRepository(CustomerOrderDbContext dbContext): ICustomerRepository
+public class CustomerRepository(CustomerOrderDbContext dbContext) : ICustomerRepository
 {
     public async Task<Customer?> GetByIdAsync(int customerId)
     {
@@ -23,7 +23,7 @@ public class CustomerRepository(CustomerOrderDbContext dbContext): ICustomerRepo
 
     public async Task<IEnumerable<Customer>> GetAllAsync()
     {
-        return await  dbContext.Customers
+        return await dbContext.Customers
             .AsNoTracking()
             .ToListAsync();
     }
@@ -32,16 +32,24 @@ public class CustomerRepository(CustomerOrderDbContext dbContext): ICustomerRepo
     {
         dbContext.Customers.Add(customer);
         int rowCount = await dbContext.SaveChangesAsync();
-        if (noTracking) dbContext.ChangeTracker.Clear();
+        if (noTracking)
+        {
+            dbContext.ChangeTracker.Clear();
+        }
+
         return rowCount > 0;
-        
+
     }
 
     public async Task<bool> UpdateAsync(Customer customer, bool noTracking = true)
     {
         dbContext.Customers.Update(customer);
         int rowCount = await dbContext.SaveChangesAsync();
-        if (noTracking) dbContext.ChangeTracker.Clear();
+        if (noTracking)
+        {
+            dbContext.ChangeTracker.Clear();
+        }
+
         return rowCount > 0;
     }
 

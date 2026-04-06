@@ -13,10 +13,15 @@ public class OrderService(IOrderRepository orderRepository, ICustomerRepository 
     {
         var order = await orderRepository.GetByOrderNumberAsync(orderNumber);
         if (order == null)
+        {
             return null;
+        }
 
         var customer = order.Customer ?? await customerRepository.GetByIdAsync(order.CustomerId);
-        if (customer == null) return null;
+        if (customer == null)
+        {
+            return null;
+        }
 
         return MapToResponse(order, customer);
     }
@@ -25,7 +30,9 @@ public class OrderService(IOrderRepository orderRepository, ICustomerRepository 
     {
         var customer = await customerRepository.GetByEmailAsync(customerEmail);
         if (customer == null)
+        {
             return Enumerable.Empty<OrderResponse>();
+        }
 
         var orders = await orderRepository.GetByCustomerIdAsync(customer.CustomerId);
         return orders.Select(o => MapToResponse(o, customer));
@@ -40,10 +47,14 @@ public class OrderService(IOrderRepository orderRepository, ICustomerRepository 
     {
         // Apply default pagination if not specified
         if (pageSize <= 0)
+        {
             pageSize = ApplicationConstants.Pagination.DefaultPageSize;
+        }
 
         if (pageSize > ApplicationConstants.Pagination.MaxPageSize)
+        {
             pageSize = ApplicationConstants.Pagination.MaxPageSize;
+        }
 
         var (orders, totalCount) = await orderRepository.GetFilteredAsync(
             startDate,
@@ -96,7 +107,10 @@ public class OrderService(IOrderRepository orderRepository, ICustomerRepository 
             CreatedAt = DateTime.UtcNow
         };
 
-        if (await orderRepository.CreateAsync(order)) return orderNumber;
+        if (await orderRepository.CreateAsync(order))
+        {
+            return orderNumber;
+        }
 
         throw new InvalidOperationException();
     }
@@ -105,7 +119,9 @@ public class OrderService(IOrderRepository orderRepository, ICustomerRepository 
     {
         var order = await orderRepository.GetByOrderNumberAsync(orderNumber);
         if (order == null)
+        {
             return false;
+        }
 
         // Update status
         order.Status = request.Status;

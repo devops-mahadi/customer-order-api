@@ -21,7 +21,9 @@ public class OrdersController(IOrderService orderService) : ControllerBase
     {
         var order = await orderService.GetByOrderNumberAsync(orderNumber);
         if (order == null)
+        {
             return NotFound(new { message = $"Order '{orderNumber}' not found" });
+        }
 
         return Ok(order);
     }
@@ -50,7 +52,9 @@ public class OrdersController(IOrderService orderService) : ControllerBase
         [FromQuery] int pageSize = 10)
     {
         if (pageNumber < ApplicationConstants.Pagination.MinPageNumber)
+        {
             return BadRequest(new { message = "Page number must be greater than 0" });
+        }
 
         var orders = await orderService.GetFilteredAsync(startDate, endDate, status, pageNumber, pageSize);
         return Ok(orders);
@@ -65,7 +69,9 @@ public class OrdersController(IOrderService orderService) : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateOrderRequest request)
     {
         if (!ModelState.IsValid)
+        {
             return BadRequest(ModelState);
+        }
 
         try
         {
@@ -89,11 +95,15 @@ public class OrdersController(IOrderService orderService) : ControllerBase
     public async Task<IActionResult> Update(string orderNumber, [FromBody] UpdateOrderRequest request)
     {
         if (!ModelState.IsValid)
+        {
             return BadRequest(ModelState);
+        }
 
         var success = await orderService.UpdateAsync(orderNumber, request);
         if (!success)
+        {
             return NotFound(new { message = $"Order '{orderNumber}' not found" });
+        }
 
         return Ok(new { message = "Order updated successfully", orderNumber });
     }
