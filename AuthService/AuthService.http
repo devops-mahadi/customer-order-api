@@ -1,0 +1,93 @@
+@AuthService_HostAddress = http://localhost:5170
+
+### ========================================
+### AUTH SERVICE ENDPOINTS
+### ========================================
+
+### 1. Get Demo Users (shows available test accounts)
+GET {{AuthService_HostAddress}}/api/auth/demo-users
+
+### 2. Login - Customer (John Doe)
+POST {{AuthService_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+### 3. Login - Customer (Jane Smith)
+POST {{AuthService_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "jane.smith@example.com",
+  "password": "password123"
+}
+
+### 4. Login - Customer (Bob Johnson)
+POST {{AuthService_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "bob.johnson@example.com",
+  "password": "password123"
+}
+
+### 5. Login - Admin
+POST {{AuthService_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+### 6. Login - Invalid Credentials (Should fail)
+POST {{AuthService_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "invalid@example.com",
+  "password": "wrongpassword"
+}
+
+### 7. Login - Validation Error (Missing password)
+POST {{AuthService_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
+
+### 8. Login - Validation Error (Invalid email format)
+POST {{AuthService_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "not-an-email",
+  "password": "password123"
+}
+
+
+### ========================================
+### NOTES
+### ========================================
+#
+# Available Demo Users:
+# - john.doe@example.com / password123 (Customer)
+# - jane.smith@example.com / password123 (Customer)
+# - bob.johnson@example.com / password123 (Customer)
+# - admin@example.com / admin123 (Admin)
+#
+# Response Format:
+# {
+#   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+#   "email": "john.doe@example.com",
+#   "role": "Customer",
+#   "expiresIn": 3600,
+#   "expiresAt": "2026-04-07T12:00:00Z"
+# }
+#
+# Copy the "token" value and use it in CustomerOrder.http file
+#
