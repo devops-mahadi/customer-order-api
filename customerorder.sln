@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomerOrder", "CustomerOr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomerOrder.Tests", "CustomerOrder.Tests\CustomerOrder.Tests.csproj", "{F9F39409-26DC-4545-8527-F924C97A8D38}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService", "AuthService\AuthService.csproj", "{73AC1A99-136E-4ED2-8EDB-B05EDFEC9809}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +40,18 @@ Global
 		{F9F39409-26DC-4545-8527-F924C97A8D38}.Release|x64.Build.0 = Release|Any CPU
 		{F9F39409-26DC-4545-8527-F924C97A8D38}.Release|x86.ActiveCfg = Release|Any CPU
 		{F9F39409-26DC-4545-8527-F924C97A8D38}.Release|x86.Build.0 = Release|Any CPU
+		{73AC1A99-136E-4ED2-8EDB-B05EDFEC9809}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73AC1A99-136E-4ED2-8EDB-B05EDFEC9809}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73AC1A99-136E-4ED2-8EDB-B05EDFEC9809}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{73AC1A99-136E-4ED2-8EDB-B05EDFEC9809}.Debug|x64.Build.0 = Debug|Any CPU
+		{73AC1A99-136E-4ED2-8EDB-B05EDFEC9809}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{73AC1A99-136E-4ED2-8EDB-B05EDFEC9809}.Debug|x86.Build.0 = Debug|Any CPU
+		{73AC1A99-136E-4ED2-8EDB-B05EDFEC9809}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73AC1A99-136E-4ED2-8EDB-B05EDFEC9809}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73AC1A99-136E-4ED2-8EDB-B05EDFEC9809}.Release|x64.ActiveCfg = Release|Any CPU
+		{73AC1A99-136E-4ED2-8EDB-B05EDFEC9809}.Release|x64.Build.0 = Release|Any CPU
+		{73AC1A99-136E-4ED2-8EDB-B05EDFEC9809}.Release|x86.ActiveCfg = Release|Any CPU
+		{73AC1A99-136E-4ED2-8EDB-B05EDFEC9809}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
