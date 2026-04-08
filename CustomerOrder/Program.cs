@@ -2,6 +2,7 @@ using System.Text;
 using CustomerOrder.Application.Interfaces;
 using CustomerOrder.Application.Services;
 using CustomerOrder.Domain.Interfaces;
+using CustomerOrder.Infrastructure.Middleware;
 using CustomerOrder.Infrastructure.Persistence;
 using CustomerOrder.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -27,10 +28,16 @@ public class Program
         // Register Repositories
         builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
         builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+        builder.Services.AddScoped<IAuditRepository, AuditRepository>();
+        builder.Services.AddScoped<IConsentRepository, ConsentRepository>();
 
         // Register Application Services
         builder.Services.AddScoped<ICustomerService, CustomerService>();
         builder.Services.AddScoped<IOrderService, OrderService>();
+        builder.Services.AddScoped<IAuditService, AuditService>();
+
+        // Register GDPR Data Retention Background Service
+        builder.Services.AddHostedService<DataRetentionService>();
 
         // Configure JWT Authentication
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -82,6 +89,9 @@ public class Program
 
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // GDPR: Audit middleware for logging all requests
+        app.UseMiddleware<AuditMiddleware>();
 
         app.MapControllers();
 

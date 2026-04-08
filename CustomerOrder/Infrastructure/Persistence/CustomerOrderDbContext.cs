@@ -11,6 +11,8 @@ public class CustomerOrderDbContext : DbContext
 
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<CustomerConsent> CustomerConsents => Set<CustomerConsent>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -27,5 +29,7 @@ public class CustomerOrderDbContext : DbContext
         modelBuilder.HasDefaultSchema(ApplicationConstants.ApplicationSchema);
         modelBuilder.ApplyConfiguration(new CustomerConfiguration());
         modelBuilder.ApplyConfiguration(new OrderConfiguration());
+        modelBuilder.ApplyConfiguration(new AuditLogConfiguration());
+        modelBuilder.ApplyConfiguration(new CustomerConsentConfiguration());
     }
 }

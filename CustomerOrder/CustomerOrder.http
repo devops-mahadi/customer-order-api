@@ -359,3 +359,535 @@ Authorization: Bearer {{token}}
 ### 45. Filter Orders - Exceed Max Page Size (Should use max allowed)
 GET {{CustomerOrder_HostAddress}}/api/orders?pageNumber=1&pageSize=1000
 Authorization: Bearer {{token}}
+
+
+### ========================================
+### GDPR COMPLIANCE ENDPOINTS
+### ========================================
+
+### IMPORTANT: GDPR endpoints implement EU data protection regulations
+### Article 7: Consent Management
+### Article 17: Right to Erasure (Right to be Forgotten)
+### Article 20: Right to Data Portability
+### Article 30: Records of Processing Activities (Audit Logging)
+
+### ========================================
+### GDPR - Article 20: Right to Data Portability
+### ========================================
+
+### 46. Export Customer Data - John Doe (GDPR Article 20)
+### Downloads complete customer data including orders and consents as JSON file
+GET {{CustomerOrder_HostAddress}}/api/customers/john.doe@example.com/export
+Authorization: Bearer {{token}}
+
+### 47. Export Customer Data - Jane Smith
+GET {{CustomerOrder_HostAddress}}/api/customers/jane.smith@example.com/export
+Authorization: Bearer {{token}}
+
+### 48. Export Customer Data - Not Found (Should return 404)
+GET {{CustomerOrder_HostAddress}}/api/customers/nonexistent@example.com/export
+Authorization: Bearer {{token}}
+
+
+### ========================================
+### GDPR - Article 7: Consent Management
+### ========================================
+
+### 49. Grant Consent - Marketing (John Doe)
+POST {{CustomerOrder_HostAddress}}/api/customers/john.doe@example.com/consents
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "consentType": "Marketing",
+  "consentVersion": "1.0"
+}
+
+### 50. Grant Consent - DataProcessing (John Doe)
+POST {{CustomerOrder_HostAddress}}/api/customers/john.doe@example.com/consents
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "consentType": "DataProcessing",
+  "consentVersion": "1.0"
+}
+
+### 51. Grant Consent - Profiling (Jane Smith)
+POST {{CustomerOrder_HostAddress}}/api/customers/jane.smith@example.com/consents
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "consentType": "Profiling",
+  "consentVersion": "2.0"
+}
+
+### 52. Grant Consent - ThirdPartySharing (Jane Smith)
+POST {{CustomerOrder_HostAddress}}/api/customers/jane.smith@example.com/consents
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "consentType": "ThirdPartySharing",
+  "consentVersion": "1.5"
+}
+
+### 53. Grant Consent - Customer Not Found (Should return 404)
+POST {{CustomerOrder_HostAddress}}/api/customers/nonexistent@example.com/consents
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "consentType": "Marketing",
+  "consentVersion": "1.0"
+}
+
+### 54. Grant Consent - Duplicate (Should return 201 if already granted)
+POST {{CustomerOrder_HostAddress}}/api/customers/john.doe@example.com/consents
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "consentType": "Marketing",
+  "consentVersion": "1.0"
+}
+
+### 55. Grant Consent - Missing Required Fields (Should return 400)
+POST {{CustomerOrder_HostAddress}}/api/customers/john.doe@example.com/consents
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "consentType": "Marketing"
+}
+
+
+### ========================================
+### GDPR - Get Consents
+### ========================================
+
+### 56. Get All Consents - John Doe
+GET {{CustomerOrder_HostAddress}}/api/customers/john.doe@example.com/consents
+Authorization: Bearer {{token}}
+
+### 57. Get All Consents - Jane Smith
+GET {{CustomerOrder_HostAddress}}/api/customers/jane.smith@example.com/consents
+Authorization: Bearer {{token}}
+
+### 58. Get All Consents - Customer Not Found (Should return 404)
+GET {{CustomerOrder_HostAddress}}/api/customers/nonexistent@example.com/consents
+Authorization: Bearer {{token}}
+
+
+### ========================================
+### GDPR - Revoke Consents
+### ========================================
+
+### 59. Revoke Consent - Marketing (John Doe)
+DELETE {{CustomerOrder_HostAddress}}/api/customers/john.doe@example.com/consents/Marketing
+Authorization: Bearer {{token}}
+
+### 60. Revoke Consent - Profiling (Jane Smith)
+DELETE {{CustomerOrder_HostAddress}}/api/customers/jane.smith@example.com/consents/Profiling
+Authorization: Bearer {{token}}
+
+### 61. Revoke Consent - Not Found (Should return 404)
+DELETE {{CustomerOrder_HostAddress}}/api/customers/john.doe@example.com/consents/NonExistentType
+Authorization: Bearer {{token}}
+
+### 62. Revoke Consent - Customer Not Found (Should return 404)
+DELETE {{CustomerOrder_HostAddress}}/api/customers/nonexistent@example.com/consents/Marketing
+Authorization: Bearer {{token}}
+
+
+### ========================================
+### GDPR - Article 17: Right to Erasure (Right to be Forgotten)
+### ========================================
+
+### IMPORTANT: Create a test customer first before anonymizing
+### Run this to create a test customer for anonymization
+
+### 63. Create Test Customer for Anonymization - Alice Test
+POST {{CustomerOrder_HostAddress}}/api/customers
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "email": "alice.test@example.com",
+  "firstName": "Alice",
+  "lastName": "Test",
+  "phoneNumber": "555-1111"
+}
+
+### 64. Create Order for Alice (To test that orders remain after anonymization)
+POST {{CustomerOrder_HostAddress}}/api/orders
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "customerEmail": "alice.test@example.com",
+  "totalAmount": 99.99,
+  "shippingAddress": "123 Test St"
+}
+
+### 65. Grant Consent for Alice (To test consent tracking)
+POST {{CustomerOrder_HostAddress}}/api/customers/alice.test@example.com/consents
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "consentType": "Marketing",
+  "consentVersion": "1.0"
+}
+
+### 66. Verify Alice's Data Before Anonymization
+GET {{CustomerOrder_HostAddress}}/api/customers/alice.test@example.com
+Authorization: Bearer {{token}}
+
+### 67. Export Alice's Data Before Anonymization (For comparison)
+GET {{CustomerOrder_HostAddress}}/api/customers/alice.test@example.com/export
+Authorization: Bearer {{token}}
+
+### 68. Anonymize Customer - Alice Test (GDPR Article 17 - Right to be Forgotten)
+### This will:
+### - Soft delete the customer (IsDeleted = true)
+### - Anonymize: FirstName, LastName, Email, PhoneNumber
+### - Keep orders intact (referential integrity)
+### - Record deletion reason and timestamp
+POST {{CustomerOrder_HostAddress}}/api/customers/alice.test@example.com/anonymize?reason=Customer requested account deletion
+Authorization: Bearer {{token}}
+
+### 69. Verify Alice's Data After Anonymization (Should return 404 or anonymized data)
+GET {{CustomerOrder_HostAddress}}/api/customers/alice.test@example.com
+Authorization: Bearer {{token}}
+
+### 70. Try to Anonymize Again (Should return 400 - already deleted)
+POST {{CustomerOrder_HostAddress}}/api/customers/alice.test@example.com/anonymize?reason=Duplicate request
+Authorization: Bearer {{token}}
+
+### 71. Anonymize Customer - Not Found (Should return 404)
+POST {{CustomerOrder_HostAddress}}/api/customers/nonexistent@example.com/anonymize?reason=Test
+Authorization: Bearer {{token}}
+
+### 72. Anonymize Customer - Default Reason
+POST {{CustomerOrder_HostAddress}}/api/customers/bob.johnson@example.com/anonymize
+Authorization: Bearer {{token}}
+
+
+### ========================================
+### GDPR - Complete Workflow Test
+### ========================================
+
+### Complete GDPR workflow: Create → Grant Consents → Export → Anonymize
+
+### 73. Create GDPR Test Customer
+POST {{CustomerOrder_HostAddress}}/api/customers
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "email": "gdpr.workflow@example.com",
+  "firstName": "GDPR",
+  "lastName": "Workflow",
+  "phoneNumber": "555-GDPR"
+}
+
+### 74. Grant Multiple Consents
+POST {{CustomerOrder_HostAddress}}/api/customers/gdpr.workflow@example.com/consents
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "consentType": "Marketing",
+  "consentVersion": "1.0"
+}
+
+###
+POST {{CustomerOrder_HostAddress}}/api/customers/gdpr.workflow@example.com/consents
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "consentType": "DataProcessing",
+  "consentVersion": "1.0"
+}
+
+### 75. Create Orders for GDPR Workflow Customer
+POST {{CustomerOrder_HostAddress}}/api/orders
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "customerEmail": "gdpr.workflow@example.com",
+  "totalAmount": 199.99,
+  "shippingAddress": "GDPR Test Address"
+}
+
+###
+POST {{CustomerOrder_HostAddress}}/api/orders
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "customerEmail": "gdpr.workflow@example.com",
+  "totalAmount": 299.99,
+  "shippingAddress": "GDPR Test Address 2"
+}
+
+### 76. View All Consents
+GET {{CustomerOrder_HostAddress}}/api/customers/gdpr.workflow@example.com/consents
+Authorization: Bearer {{token}}
+
+### 77. Export Complete Data (All orders, all consents)
+GET {{CustomerOrder_HostAddress}}/api/customers/gdpr.workflow@example.com/export
+Authorization: Bearer {{token}}
+
+### 78. Revoke One Consent
+DELETE {{CustomerOrder_HostAddress}}/api/customers/gdpr.workflow@example.com/consents/Marketing
+Authorization: Bearer {{token}}
+
+### 79. Export Again (Should show Marketing consent as revoked)
+GET {{CustomerOrder_HostAddress}}/api/customers/gdpr.workflow@example.com/export
+Authorization: Bearer {{token}}
+
+### 80. Final Anonymization
+POST {{CustomerOrder_HostAddress}}/api/customers/gdpr.workflow@example.com/anonymize?reason=End of GDPR workflow test
+Authorization: Bearer {{token}}
+
+
+### ========================================
+### NOTES
+### ========================================
+#
+# IMPORTANT - Authentication Required:
+# All endpoints require JWT authentication. Follow these steps:
+#
+# 1. START AuthService first:
+#    cd AuthService && dotnet run
+#    (Runs on http://localhost:5170)
+#
+# 2. START CustomerOrder API:
+#    cd CustomerOrder && dotnet run
+#    (Runs on http://localhost:5044)
+#
+# 3. LOGIN to get JWT token:
+#    - Run request #0 (Login to get JWT Token)
+#    - Copy the "token" value from the response
+#    - Paste it in the @token variable (line 22)
+#    - OR use AuthService.http to login separately
+#
+# 4. TEST API endpoints with the token
+#
+# Available Demo Users:
+# - john.doe@example.com / password123 (Customer)
+# - jane.smith@example.com / password123 (Customer)
+# - bob.johnson@example.com / password123 (Customer)
+# - admin@example.com / admin123 (Admin)
+#
+# Test Execution Order (Recommended):
+#
+# 1. Run request 0 to get JWT token
+# 2. Run requests 1-3 to create customers
+# 3. Run request 6 to verify all customers created
+# 4. Run requests 13-17 to create orders (all created with "Pending" status)
+# 5. Run requests 20-24 to test order retrieval
+# 6. Run requests 25-31 to update order status
+# 7. Run requests 32-45 to test order filtering and pagination
+# 8. Run request 9 to test customer update
+# 9. Run request 11 to test customer deletion (optional)
+#
+# Order Status Workflow:
+# - All orders are created with "Pending" status automatically
+# - Use PUT /api/orders/{orderNumber} to update status to:
+#   * Confirmed
+#   * Shipped
+#   * Delivered
+#   * Cancelled
+# - You can also update shipping address during status update
+#
+# Expected Results:
+# - Request 0: 200 OK with JWT token
+# - Requests without valid token: 401 Unauthorized
+# - Requests 1-3: 201 Created with customer response
+# - Requests 4-5: 400 Bad Request with validation errors
+# - Request 6: 200 OK with array of customers
+# - Requests 13-17: 200 OK with order number (status always "Pending")
+# - Request 18: 400 Bad Request (customer not found)
+# - Request 19: 400 Bad Request (missing required fields)
+# - Requests 25-29: 200 OK with success message
+# - Request 30: 404 Not Found (order doesn't exist)
+# - Request 31: 400 Bad Request (missing required status field)
+# - Filtering requests: 200 OK with filtered/paginated results
+#
+# Tips:
+# - Token expires in 60 minutes - run login again if expired
+# - Replace ORDER_NUMBER in requests 22, 25-31 with actual order number from create response
+# - Use different ports if running via HTTPS (https://localhost:7223)
+# - Check response headers for Location header after POST requests
+# - Monitor pagination metadata in filter responses
+# - Order status can only be updated, not set during creation
+#
+#
+### ========================================
+### GDPR & AUDIT LOGGING NOTES
+### ========================================
+#
+# GDPR Compliance Test Guide:
+# ---------------------------
+#
+# 1. GDPR Article 20 - Right to Data Portability (Requests 46-48)
+#    - Export endpoint returns JSON file with all customer data
+#    - Includes: personal info, orders, consents
+#    - File name format: customer-data-{email}-{date}.json
+#    - Expected: 200 OK with downloadable JSON file
+#
+# 2. GDPR Article 7 - Consent Management (Requests 49-62)
+#    - Grant consent: POST /api/customers/{email}/consents
+#    - Revoke consent: DELETE /api/customers/{email}/consents/{type}
+#    - View consents: GET /api/customers/{email}/consents
+#    - Consent types: Marketing, DataProcessing, Profiling, ThirdPartySharing
+#    - Tracks: IP address, user agent, consent version, timestamps
+#    - Expected: 201 Created for grant, 200 OK for revoke/view
+#
+# 3. GDPR Article 17 - Right to Erasure (Requests 63-72)
+#    - Anonymization endpoint: POST /api/customers/{email}/anonymize
+#    - Soft delete: Sets IsDeleted=true, keeps orders intact
+#    - Anonymizes: FirstName → "REDACTED", LastName → "REDACTED"
+#    - Email → "deleted-{GUID}@anonymized.local"
+#    - PhoneNumber → empty
+#    - Records: DeletedAt timestamp, DeletedReason
+#    - Expected: 200 OK with anonymization confirmation
+#    - Prevents: Re-anonymization (returns 400 Bad Request)
+#
+# 4. GDPR Article 30 - Audit Logging (Automatic)
+#    - All API requests are automatically logged via AuditMiddleware
+#    - Logs stored in: customerorder.AuditLogs table
+#    - Captured data:
+#      * Who: UserEmail (from JWT)
+#      * What: EntityType, EntityId, Action
+#      * When: ActionDate (UTC)
+#      * Where: IpAddress
+#      * How: HttpMethod, Endpoint, UserAgent
+#    - Actions tracked: Created, Updated, Deleted, Viewed, Exported, Anonymized, ConsentGranted, ConsentRevoked
+#
+# 5. Complete GDPR Workflow (Requests 73-80)
+#    - Creates customer → Grants consents → Creates orders → Exports data
+#    - Revokes consent → Exports again → Anonymizes
+#    - Demonstrates full GDPR lifecycle
+#
+# Testing Audit Logging:
+# ----------------------
+# Audit logs are created automatically. To verify:
+#
+# 1. Run any GDPR endpoint (e.g., request 46 - Export)
+# 2. Query the database:
+#    SELECT TOP 10 * FROM customerorder.AuditLogs
+#    ORDER BY ActionDate DESC;
+#
+# 3. Verify log contains:
+#    - EntityType: "Customer"
+#    - EntityId: "john.doe@example.com"
+#    - Action: "Exported"
+#    - UserEmail: "jane.smith@example.com" (from JWT)
+#    - IpAddress: Your local IP
+#    - HttpMethod: "GET"
+#    - Endpoint: "/api/customers/john.doe@example.com/export"
+#
+# 4. Check consent actions:
+#    SELECT * FROM customerorder.AuditLogs
+#    WHERE Action IN ('ConsentGranted', 'ConsentRevoked')
+#    ORDER BY ActionDate DESC;
+#
+# 5. Check anonymization actions:
+#    SELECT * FROM customerorder.AuditLogs
+#    WHERE Action = 'Anonymized'
+#    ORDER BY ActionDate DESC;
+#
+# Data Retention Service:
+# -----------------------
+# Background service runs daily at 2 AM UTC (configurable)
+#
+# Configuration in appsettings.json:
+# {
+#   "DataRetention": {
+#     "DeletedCustomersRetentionDays": 90,
+#     "AuditLogRetentionYears": 3,
+#     "RunCleanupAtHour": 2,
+#     "EnableAutomaticCleanup": true
+#   }
+# }
+#
+# Cleanup tasks:
+# - Purges audit logs older than 3 years
+# - Permanently deletes customers anonymized >90 days ago
+# - Logs all operations with counts
+#
+# To verify data retention in database:
+#
+# 1. Check anonymized customers (soft deleted):
+#    SELECT * FROM customerorder.Customers
+#    WHERE IsDeleted = 1
+#    ORDER BY DeletedAt DESC;
+#
+# 2. Check old audit logs:
+#    SELECT COUNT(*) FROM customerorder.AuditLogs
+#    WHERE ActionDate < DATEADD(YEAR, -3, GETUTCDATE());
+#
+# 3. Check consents:
+#    SELECT c.Email, cc.ConsentType, cc.IsGranted, cc.ConsentDate, cc.RevokedDate
+#    FROM customerorder.CustomerConsents cc
+#    JOIN customerorder.Customers c ON cc.CustomerId = c.CustomerId
+#    ORDER BY cc.ConsentDate DESC;
+#
+# Expected Results:
+# -----------------
+# Request 46-47: 200 OK, downloads JSON file
+# Request 48: 404 Not Found
+# Request 49-52: 201 Created with consent confirmation
+# Request 53: 404 Not Found (customer doesn't exist)
+# Request 54: 201 Created (duplicate consent allowed)
+# Request 55: 400 Bad Request (missing required field)
+# Request 56-57: 200 OK with array of consents
+# Request 58: 404 Not Found
+# Request 59-60: 200 OK with revocation confirmation
+# Request 61-62: 404 Not Found
+# Request 63-67: Setup for anonymization test
+# Request 68: 200 OK with anonymization confirmation
+# Request 69: 404 Not Found (customer anonymized)
+# Request 70: 400 Bad Request (already deleted)
+# Request 71: 404 Not Found
+# Request 72: 200 OK
+# Request 73-80: Complete GDPR workflow demonstration
+#
+# GDPR Compliance Verification Checklist:
+# ----------------------------------------
+# ✅ Article 7 (Consent): Can grant, view, and revoke consents
+# ✅ Article 17 (Erasure): Can anonymize customer data
+# ✅ Article 20 (Portability): Can export all data as JSON
+# ✅ Article 30 (Records): All actions automatically logged
+# ✅ Data Retention: Automatic cleanup of old data
+# ✅ Soft Delete: Maintains referential integrity
+# ✅ Audit Trail: Complete history of data access/modifications
+#
+# Database Migration Required:
+# ----------------------------
+# Before testing GDPR endpoints, run:
+#   cd CustomerOrder
+#   dotnet ef database update
+#
+# This creates:
+# - customerorder.AuditLogs table
+# - customerorder.CustomerConsents table
+# - Adds soft delete fields to Customers table
+#
+# Security Notes:
+# ---------------
+# - All GDPR endpoints require JWT authentication
+# - IP address and User-Agent captured for consent tracking
+# - Anonymization is irreversible (email becomes GUID)
+# - Orders remain intact after customer anonymization
+# - Consents are cascade-deleted when customer is hard-deleted
+# - Audit logs are append-only (no updates/deletes except retention policy)
+#
+#

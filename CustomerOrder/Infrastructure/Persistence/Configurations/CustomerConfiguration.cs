@@ -41,15 +41,33 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");
 
+        // GDPR: Soft delete fields
+        builder.Property(c => c.IsDeleted)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(c => c.DeletedAt);
+
+        builder.Property(c => c.DeletedReason)
+            .HasMaxLength(ApplicationConstants.Consent.DeletedReasonMaxLength);
+
         // Indexes for performance
         builder.HasIndex(c => c.Email)
             .IsUnique()
             .HasDatabaseName("IX_Customers_Email");
+
+        builder.HasIndex(c => c.IsDeleted)
+            .HasDatabaseName("IX_Customers_IsDeleted");
 
         // Relationships
         builder.HasMany(c => c.Orders)
             .WithOne(o => o.Customer)
             .HasForeignKey(o => o.CustomerId)
             .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete
+
+        builder.HasMany(c => c.Consents)
+            .WithOne(cs => cs.Customer)
+            .HasForeignKey(cs => cs.CustomerId)
+            .OnDelete(DeleteBehavior.Cascade); // When customer deleted, delete consents
     }
 }
