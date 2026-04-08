@@ -35,14 +35,13 @@ AuthService/          # JWT Token Generation Service
 **Prerequisites**: Docker & Docker Compose
 
 ```bash
-using docker compose directly
 docker compose build
 docker compose up -d
 ```
 
 **Services will be available at:**
 - CustomerOrder API: http://localhost:8080
-- AuthService: http://localhost:5001
+- AuthService: http://localhost:7080
 - MSSQL: localhost:1433
 
 ### Option 2: Local Development
@@ -107,6 +106,12 @@ curl -X POST http://localhost:8080/api/customers/john.doe@example.com/consents \
 
 ## API Endpoints
 
+### Authentication
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/login` | Generate JWT token |
+
 ### Customers
 
 | Method | Endpoint | Description |
@@ -135,12 +140,6 @@ curl -X POST http://localhost:8080/api/customers/john.doe@example.com/consents \
 | GET | `/api/orders/customer/{email}` | Get customer orders |
 | GET | `/api/orders?startDate=&endDate=&status=&pageNumber=&pageSize=` | Get filtered orders |
 | POST | `/api/orders` | Create order |
-
-### Authentication
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/login` | Generate JWT token |
 
 ## Testing
 

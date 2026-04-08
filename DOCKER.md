@@ -6,7 +6,6 @@ This guide explains how to run the CustomerOrder API and AuthService using Docke
 
 - Docker Engine 20.10+
 - Docker Compose V2+
-- Make (optional, for convenience commands)
 
 ## Architecture
 
@@ -15,12 +14,12 @@ The Docker Compose setup includes three services:
 ```
 ┌─────────────────┐
 │   AuthService   │
-│   Port: 5001    │
+│   Port: 7080    │
 └─────────────────┘
 
 ┌─────────────────┐      ┌─────────────────┐
 │ CustomerOrder   │─────▶│  MSSQL Server   │
-│   Port: 5000    │      │   Port: 1433    │
+│   Port: 8080    │      │   Port: 1433    │
 └─────────────────┘      └─────────────────┘
 ```
 
@@ -153,171 +152,3 @@ curl -X POST http://localhost:5000/api/customers \
 | `JwtKey` | (see compose) | JWT signing key |
 | `JwtIssuer` | `CustomerOrderApi` | Token issuer |
 | `JwtAudience` | `CustomerOrderClient` | Token audience |
-
-## Volumes
-
-### mssql-data
-
-Persists MSSQL database files across container restarts.
-
-```bash
-# View volume
-docker volume ls | grep mssql
-
-# Remove volume (WARNING: deletes all data)
-docker volume rm customer-order-api_mssql-data
-```
-
-## Networking
-
-All services communicate via the `customerorder-network` bridge network.
-
-```bash
-# Inspect network
-docker network inspect customer-order-api_customerorder-network
-```
-
-## Troubleshooting
-
-### Service won't start
-
-```bash
-# Check logs
-make logs
-
-# Check specific service
-docker compose logs customerorder
-```
-
-### Database connection issues
-
-```bash
-# Check MSSQL health
-docker compose ps mssql
-
-# Test connection
-docker compose exec mssql /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "YourStrong!Passw0rd" -Q "SELECT 1"
-```
-
-### Port already in use
-
-```bash
-# Find process using port
-lsof -i :5000
-
-# Or kill the process
-kill -9 $(lsof -t -i:5000)
-```
-
-### Reset everything
-
-```bash
-# Complete reset
-make clean
-docker system prune -a
-make build
-make up
-```
-
-## Production Considerations
-
-⚠️ **This setup is for development only. For production:**
-
-1. **Security**
-   - Change default passwords
-   - Use secrets management (Docker Secrets, Azure Key Vault)
-   - Enable HTTPS with proper certificates
-   - Use environment-specific configuration files
-
-2. **Performance**
-   - Use production SQL Server edition
-   - Configure connection pooling
-   - Set up load balancing
-   - Enable caching (Redis)
-
-3. **Monitoring**
-   - Add health check endpoints
-   - Configure logging (ELK stack, Application Insights)
-   - Set up monitoring (Prometheus, Grafana)
-   - Enable distributed tracing
-
-4. **Scaling**
-   - Use Docker Swarm or Kubernetes
-   - Set up database replication
-   - Configure auto-scaling
-   - Use managed database services (Azure SQL)
-
-## Development Workflow
-
-### Update Code
-
-```bash
-# After code changes, rebuild and restart
-make rebuild
-
-# Or rebuild specific service
-docker compose build customerorder
-docker compose up -d customerorder
-```
-
-### Database Migrations
-
-```bash
-# Add migration (outside Docker)
-dotnet ef migrations add MigrationName --project CustomerOrder
-
-# Apply migration
-make migrate
-```
-
-### Debugging
-
-```bash
-# Access container shell
-make shell-api
-
-# View real-time logs
-make logs-api
-```
-
-## Clean Up
-
-```bash
-# Stop services (keep volumes)
-make down
-
-# Remove everything
-make clean
-
-# Remove unused Docker resources
-docker system prune -a --volumes
-```
-
-## Makefile Commands Reference
-
-```bash
-make help          # Show all available commands
-make build         # Build Docker images
-make up            # Start services
-make down          # Stop services
-make restart       # Restart services
-make logs          # View all logs
-make logs-api      # CustomerOrder logs
-make logs-auth     # AuthService logs
-make logs-db       # MSSQL logs
-make clean         # Remove everything
-make migrate       # Run migrations
-make test          # Run tests
-make status        # Show service status
-make rebuild       # Clean rebuild
-make shell-api     # Access API container
-make shell-auth    # Access Auth container
-make shell-db      # Access DB container
-```
-
-## Support
-
-For issues or questions:
-- Check logs: `make logs`
-- Check service status: `make status`
-- Reset environment: `make clean && make build && make up`
