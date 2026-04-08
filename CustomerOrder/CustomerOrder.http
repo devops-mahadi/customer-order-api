@@ -19,7 +19,7 @@ Content-Type: application/json
 
 ### After running the login request above, copy the token from response and paste it below
 ### Or if using VS Code REST Client, it will auto-capture from the response above
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJqYW5lLnNtaXRoQGV4YW1wbGUuY29tIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQ3VzdG9tZXIiLCJqdGkiOiJmZWZkMWE4Yy1mZGM5LTQzN2MtOTU3OC04ODE4MjBjODJkYjMiLCJzdWIiOiJqYW5lLnNtaXRoQGV4YW1wbGUuY29tIiwiZXhwIjoxNzc1NTY2ODA1LCJpc3MiOiJDdXN0b21lck9yZGVyQXBpIiwiYXVkIjoiQ3VzdG9tZXJPcmRlckNsaWVudCJ9.N0b_-C1_3EBLzUjCX3IuGZnUxBkC6xIRk6O-XPtOLh8
+@token = YOUR_JWT_TOKEN
 
 
 ### ========================================
@@ -359,77 +359,3 @@ Authorization: Bearer {{token}}
 ### 45. Filter Orders - Exceed Max Page Size (Should use max allowed)
 GET {{CustomerOrder_HostAddress}}/api/orders?pageNumber=1&pageSize=1000
 Authorization: Bearer {{token}}
-
-
-### ========================================
-### NOTES
-### ========================================
-#
-# IMPORTANT - Authentication Required:
-# All endpoints require JWT authentication. Follow these steps:
-#
-# 1. START AuthService first:
-#    cd AuthService && dotnet run
-#    (Runs on http://localhost:5170)
-#
-# 2. START CustomerOrder API:
-#    cd CustomerOrder && dotnet run
-#    (Runs on http://localhost:5044)
-#
-# 3. LOGIN to get JWT token:
-#    - Run request #0 (Login to get JWT Token)
-#    - Copy the "token" value from the response
-#    - Paste it in the @token variable (line 22)
-#    - OR use AuthService.http to login separately
-#
-# 4. TEST API endpoints with the token
-#
-# Available Demo Users:
-# - john.doe@example.com / password123 (Customer)
-# - jane.smith@example.com / password123 (Customer)
-# - bob.johnson@example.com / password123 (Customer)
-# - admin@example.com / admin123 (Admin)
-#
-# Test Execution Order (Recommended):
-#
-# 1. Run request 0 to get JWT token
-# 2. Run requests 1-3 to create customers
-# 3. Run request 6 to verify all customers created
-# 4. Run requests 13-17 to create orders (all created with "Pending" status)
-# 5. Run requests 20-24 to test order retrieval
-# 6. Run requests 25-31 to update order status
-# 7. Run requests 32-45 to test order filtering and pagination
-# 8. Run request 9 to test customer update
-# 9. Run request 11 to test customer deletion (optional)
-#
-# Order Status Workflow:
-# - All orders are created with "Pending" status automatically
-# - Use PUT /api/orders/{orderNumber} to update status to:
-#   * Confirmed
-#   * Shipped
-#   * Delivered
-#   * Cancelled
-# - You can also update shipping address during status update
-#
-# Expected Results:
-# - Request 0: 200 OK with JWT token
-# - Requests without valid token: 401 Unauthorized
-# - Requests 1-3: 201 Created with customer response
-# - Requests 4-5: 400 Bad Request with validation errors
-# - Request 6: 200 OK with array of customers
-# - Requests 13-17: 200 OK with order number (status always "Pending")
-# - Request 18: 400 Bad Request (customer not found)
-# - Request 19: 400 Bad Request (missing required fields)
-# - Requests 25-29: 200 OK with success message
-# - Request 30: 404 Not Found (order doesn't exist)
-# - Request 31: 400 Bad Request (missing required status field)
-# - Filtering requests: 200 OK with filtered/paginated results
-#
-# Tips:
-# - Token expires in 60 minutes - run login again if expired
-# - Replace ORDER_NUMBER in requests 22, 25-31 with actual order number from create response
-# - Use different ports if running via HTTPS (https://localhost:7223)
-# - Check response headers for Location header after POST requests
-# - Monitor pagination metadata in filter responses
-# - Order status can only be updated, not set during creation
-#
