@@ -100,6 +100,13 @@ public class CustomerService(
                 string.Format(ApplicationConstants.ValidationMessages.CustomerNotFound, email));
         }
 
+        // Check if customer is deleted
+        if (customer.IsDeleted)
+        {
+            throw new InvalidOperationException(
+                $"Cannot export data for deleted customer '{email}'");
+        }
+
         // Get all orders for this customer
         var orders = await orderRepository.GetByCustomerIdAsync(customer.CustomerId);
         var orderResponses = orders.Select(o => new OrderResponse
@@ -196,8 +203,8 @@ public class CustomerService(
         var existingConsent = await consentRepository.GetByCustomerIdAndTypeAsync(customer.CustomerId, consentType);
         if (existingConsent != null && existingConsent.IsGranted)
         {
-            // Consent already granted
-            return true;
+            throw new InvalidOperationException(
+                $"Consent '{consentType}' has already been granted for customer '{email}'");
         }
 
         var consent = new CustomerConsent

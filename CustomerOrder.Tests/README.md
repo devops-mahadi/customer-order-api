@@ -11,12 +11,9 @@ dotnet test
 
 ### Run Unit Tests (Fast, No Dependencies)
 ```bash
+dotnet test --filter "Category=Unit"
+# OR
 dotnet test --filter "FullyQualifiedName~Unit"
-```
-
-### Run Integration Tests - InMemory (Fast, No Docker)
-```bash
-dotnet test --filter "FullyQualifiedName~Integration.InMemory"
 ```
 
 ### Run Integration Tests - Container (Slow, Requires Docker)
@@ -24,11 +21,52 @@ dotnet test --filter "FullyQualifiedName~Integration.InMemory"
 dotnet test --filter "FullyQualifiedName~Integration.Container"
 ```
 
+### Run with Code Coverage
+```bash
+dotnet test --collect:"XPlat Code Coverage"
+```
+
 ## Prerequisites
 
 - .NET 10.0 SDK
 - Docker Desktop (for Container integration tests only)
 
-## Test Details
+## Test Categories
 
-See [TestDesign.md](TestDesign.md) for detailed testing strategy, architecture, and troubleshooting.
+Tests use xUnit traits for categorization in CI/CD pipelines:
+
+### Unit Tests
+- **Trait**: `[Trait("Category", "Unit")]`
+- **Purpose**: Test components in isolation with mocked dependencies
+- **Database**: No database (mocked repositories)
+
+### Integration Tests
+- **Trait**: `[Trait("Category", "Integration")]`
+- **Purpose**: Test components working together
+- **Database**: Docker container MSSQL database
+
+### Example Usage
+
+```csharp
+using Xunit;
+using Moq;
+using FluentAssertions;
+
+namespace CustomerOrder.Tests.Unit.Services;
+
+[Trait("Category", "Unit")]
+public class CustomerServiceTests
+{
+    [Fact]
+    public async Task GetByEmailAsync_ExistingEmail_ReturnsCustomer()
+    {
+        // Test implementation
+    }
+}
+```
+
+## CI/CD Integration
+
+Jenkins automatically filter tests by category:
+- **Unit Tests**: Run on every build
+- **Integration Tests**: Run based on pipeline parameter

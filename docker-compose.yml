@@ -1,0 +1,79 @@
+services:
+  # SQL Server Database
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: customerorder-mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong!Passw0rd
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+    networks:
+      - customerorder-network
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "YourStrong!Passw0rd" -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  # Auth Service - JWT Token Generation
+  authservice:
+    build:
+      context: .
+      dockerfile: AuthService/Dockerfile
+    container_name: customerorder-authservice
+    image: customerorder-authservice:latest
+    ports:
+      - "7080:8080"
+      - "7081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+      - JwtKey=CustomerOrderApi-SecureKey-MinimumOf32Characters-ForJwtTokenGeneration
+      - JwtIssuer=CustomerOrderApi
+      - JwtAudience=CustomerOrderClient
+    networks:
+      - customerorder-network
+    restart: unless-stopped
+
+  # Customer Order API
+  customerorder:
+    build:
+      context: .
+      dockerfile: CustomerOrder/Dockerfile
+    container_name: customerorder-api
+    image: customerorder-api:latest
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+      - ConnectionStrings__DefaultConnection=Server=mssql,1433;Database=CustomerOrderDb;User Id=sa;Password=YourStrong!Passw0rd;Encrypt=False;TrustServerCertificate=True
+      - JwtKey=CustomerOrderApi-SecureKey-MinimumOf32Characters-ForJwtTokenGeneration
+      - JwtIssuer=CustomerOrderApi
+      - JwtAudience=CustomerOrderClient
+      - DataRetention__DeletedCustomersRetentionDays=90
+      - DataRetention__AuditLogRetentionYears=3
+      - DataRetention__RunCleanupAtHour=2
+      - DataRetention__EnableAutomaticCleanup=true
+    depends_on:
+      mssql:
+        condition: service_healthy
+    networks:
+      - customerorder-network
+    restart: unless-stopped
+
+networks:
+  customerorder-network:
+    driver: bridge
+
+volumes:
+  mssql-data:
+    driver: local

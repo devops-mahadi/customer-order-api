@@ -133,6 +133,7 @@ public class CustomersController : ControllerBase
     [HttpGet("{email}/export")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ExportData(string email)
     {
         try
@@ -150,6 +151,11 @@ public class CustomersController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
+            // Check if it's a deleted customer error
+            if (ex.Message.Contains("deleted"))
+            {
+                return BadRequest(new { message = ex.Message });
+            }
             return NotFound(new { message = ex.Message });
         }
     }
@@ -162,8 +168,13 @@ public class CustomersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Anonymize(string email, [FromQuery] string reason = "Customer requested deletion")
+    public async Task<IActionResult> Anonymize(string email, [FromQuery] string? reason)
     {
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            return BadRequest(new { message = "Reason for anonymization is required" });
+        }
+
         try
         {
             var success = await _customerService.AnonymizeAsync(email, reason);
@@ -225,6 +236,11 @@ public class CustomersController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
+            // Check if it's a duplicate consent error
+            if (ex.Message.Contains("already been granted"))
+            {
+                return BadRequest(new { message = ex.Message });
+            }
             return NotFound(new { message = ex.Message });
         }
     }

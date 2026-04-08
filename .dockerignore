@@ -1,0 +1,56 @@
+# Build outputs
+**/bin/
+**/obj/
+
+# Visual Studio / Rider
+**/.vs/
+**/.vscode/
+**/.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Test results
+**/TestResults/
+**/*.trx
+
+# NuGet packages
+*.nupkg
+*.snupkg
+**/packages/
+
+# Build artifacts
+*.log
+*.bak
+
+# macOS
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+
+# Docker
+**/Dockerfile
+**/docker-compose*.yml
+**/.dockerignore
+
+# Tests
+**/CustomerOrder.Tests/
+**/*Tests/
+**/*Test/
+
+# Configuration files (will be overridden by environment variables)
+**/appsettings.Development.json
+**/appsettings.*.json
+
+# Temporary files
+**/tmp/
+**/temp/
+**/.tmp/
