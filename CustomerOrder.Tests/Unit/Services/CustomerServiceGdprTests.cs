@@ -112,7 +112,7 @@ public class CustomerServiceGdprTests
     }
 
     [Fact]
-    public async Task ExportDataAsync_IncludesDeletedCustomerData()
+    public async Task ExportDataAsync_DeletedCustomer_ThrowsInvalidOperationException()
     {
         // Arrange
         var email = "deleted-guid@anonymized.local";
@@ -132,18 +132,13 @@ public class CustomerServiceGdprTests
 
         _mockCustomerRepository.Setup(x => x.GetByEmailAsync(email))
             .ReturnsAsync(customer);
-        _mockOrderRepository.Setup(x => x.GetByCustomerIdAsync(customer.CustomerId))
-            .ReturnsAsync(new List<Order>());
-        _mockConsentRepository.Setup(x => x.GetByCustomerIdAsync(customer.CustomerId))
-            .ReturnsAsync(new List<CustomerConsent>());
 
-        // Act
-        var result = await _service.ExportDataAsync(email);
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _service.ExportDataAsync(email));
 
-        // Assert
-        result.IsDeleted.Should().BeTrue();
-        result.DeletedAt.Should().NotBeNull();
-        result.DeletedReason.Should().Be("Customer requested deletion");
+        exception.Message.Should().Contain("deleted");
+        exception.Message.Should().Contain(email);
     }
 
     #endregion
@@ -296,7 +291,7 @@ public class CustomerServiceGdprTests
     }
 
     [Fact]
-    public async Task GrantConsentAsync_ConsentAlreadyGranted_ReturnsTrue()
+    public async Task GrantConsentAsync_ConsentAlreadyGranted_ThrowsInvalidOperationException()
     {
         // Arrange
         var email = "test@example.com";
@@ -328,11 +323,12 @@ public class CustomerServiceGdprTests
         _mockConsentRepository.Setup(x => x.GetByCustomerIdAndTypeAsync(customer.CustomerId, consentType))
             .ReturnsAsync(existingConsent);
 
-        // Act
-        var result = await _service.GrantConsentAsync(email, consentType, "127.0.0.1", "New Agent", "2.0");
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _service.GrantConsentAsync(email, consentType, "127.0.0.1", "New Agent", "2.0"));
 
-        // Assert
-        result.Should().BeTrue();
+        exception.Message.Should().Contain("already been granted");
+        exception.Message.Should().Contain(email);
         _mockConsentRepository.Verify(x => x.CreateAsync(It.IsAny<CustomerConsent>()), Times.Never);
     }
 

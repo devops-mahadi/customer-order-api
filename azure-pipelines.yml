@@ -1,0 +1,355 @@
+# Azure DevOps Pipeline for Customer Order API
+# Supports .NET 10.0 with Docker Hub integration
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - feature/*
+      - release/*
+  paths:
+    exclude:
+      - README.md
+      - docs/**
+      - .gitignore
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    exclude:
+      - README.md
+      - docs/**
+
+parameters:
+  - name: runIntegrationTests
+    displayName: 'Run Integration Tests'
+    type: boolean
+    default: true
+  - name: collectCodeCoverage
+    displayName: 'Collect Code Coverage'
+    type: boolean
+    default: true
+  - name: buildDockerImages
+    displayName: 'Build Docker Images'
+    type: boolean
+    default: true
+  - name: pushDockerImages
+    displayName: 'Push Docker Images to Docker Hub'
+    type: boolean
+    default: false
+  - name: dockerHubUsername
+    displayName: 'Docker Hub Username'
+    type: string
+    default: ''
+  - name: imageTag
+    displayName: 'Docker Image Tag'
+    type: string
+    default: 'latest'
+
+variables:
+  buildConfiguration: 'Release'
+  dotnetSdkVersion: '10.0.x'
+  vmImageName: 'ubuntu-latest'
+  testResultsDirectory: '$(Build.ArtifactStagingDirectory)/TestResults'
+  # Docker variables
+  customerOrderImage: 'customerorder-api'
+  authServiceImage: 'authservice-api'
+  buildVersion: '$(Build.BuildNumber)'
+  gitShortCommit: '$(Build.SourceVersion)'
+
+stages:
+  - stage: Build
+    displayName: 'Build and Test'
+    jobs:
+      - job: BuildAndTest
+        displayName: 'Build, Unit Tests, and Integration Tests'
+        pool:
+          vmImage: $(vmImageName)
+
+        steps:
+          - checkout: self
+            displayName: 'Checkout source code'
+            fetchDepth: 0  # Full clone for better diagnostics
+
+          - task: UseDotNet@2
+            displayName: 'Install .NET SDK $(dotnetSdkVersion)'
+            inputs:
+              packageType: 'sdk'
+              version: $(dotnetSdkVersion)
+              installationPath: $(Agent.ToolsDirectory)/dotnet
+
+          - script: |
+              dotnet --version
+              dotnet --list-sdks
+              dotnet --list-runtimes
+            displayName: 'Display .NET Info'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Restore NuGet Packages'
+            inputs:
+              command: 'restore'
+              projects: 'customerorder.sln'
+              feedsToUse: 'select'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Build Solution'
+            inputs:
+              command: 'build'
+              projects: 'customerorder.sln'
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Run Unit Tests'
+            inputs:
+              command: 'test'
+              projects: '**/CustomerOrder.Tests.csproj'
+              arguments: >
+                --configuration $(buildConfiguration)
+                --no-build
+                --filter "Category=Unit"
+                --logger "trx;LogFileName=unit-tests.trx"
+                ${{ if eq(parameters.collectCodeCoverage, true) }}:
+                  --collect:"XPlat Code Coverage"
+                --results-directory $(testResultsDirectory)/Unit
+              publishTestResults: false
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Run Integration Tests'
+            condition: and(succeeded(), eq('${{ parameters.runIntegrationTests }}', 'true'))
+            inputs:
+              command: 'test'
+              projects: '**/CustomerOrder.Tests.csproj'
+              arguments: >
+                --configuration $(buildConfiguration)
+                --no-build
+                --filter "Category=Integration"
+                --logger "trx;LogFileName=integration-tests.trx"
+                ${{ if eq(parameters.collectCodeCoverage, true) }}:
+                  --collect:"XPlat Code Coverage"
+                --results-directory $(testResultsDirectory)/Integration
+              publishTestResults: false
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Run All Tests'
+            condition: and(succeeded(), eq('${{ parameters.runIntegrationTests }}', 'false'))
+            inputs:
+              command: 'test'
+              projects: '**/CustomerOrder.Tests.csproj'
+              arguments: >
+                --configuration $(buildConfiguration)
+                --no-build
+                --logger "trx;LogFileName=all-tests.trx"
+                ${{ if eq(parameters.collectCodeCoverage, true) }}:
+                  --collect:"XPlat Code Coverage"
+                --results-directory $(testResultsDirectory)/All
+              publishTestResults: false
+
+          - script: |
+              dotnet tool install --global dotnet-reportgenerator-globaltool || true
+              ~/.dotnet/tools/reportgenerator \
+                -reports:"$(testResultsDirectory)/**/coverage.cobertura.xml" \
+                -targetdir:"$(testResultsDirectory)/CoverageReport" \
+                -reporttypes:"Html;Cobertura"
+            displayName: 'Generate Code Coverage Report'
+            condition: and(succeeded(), eq('${{ parameters.collectCodeCoverage }}', 'true'))
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Test Results'
+            condition: always()
+            inputs:
+              testResultsFormat: 'VSTest'
+              testResultsFiles: '$(testResultsDirectory)/**/*.trx'
+              mergeTestResults: true
+              failTaskOnFailedTests: true
+              testRunTitle: 'Customer Order API Tests'
+
+          - task: PublishCodeCoverageResults@2
+            displayName: 'Publish Code Coverage'
+            condition: and(succeeded(), eq('${{ parameters.collectCodeCoverage }}', 'true'))
+            inputs:
+              summaryFileLocation: '$(testResultsDirectory)/**/coverage.cobertura.xml'
+              pathToSources: '$(Build.SourcesDirectory)'
+              codeCoverageTool: 'Cobertura'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Coverage Report Artifact'
+            condition: and(succeeded(), eq('${{ parameters.collectCodeCoverage }}', 'true'))
+            inputs:
+              pathToPublish: '$(testResultsDirectory)/CoverageReport'
+              artifactName: 'CodeCoverageReport'
+              publishLocation: 'Container'
+
+  - stage: Docker
+    displayName: 'Build and Push Docker Images'
+    dependsOn: Build
+    condition: and(succeeded(), eq('${{ parameters.buildDockerImages }}', 'true'))
+    jobs:
+      - job: BuildDockerImages
+        displayName: 'Build Docker Images'
+        pool:
+          vmImage: $(vmImageName)
+
+        steps:
+          - checkout: self
+            displayName: 'Checkout source code'
+
+          - script: |
+              echo "Build Number: $(buildVersion)"
+              echo "Git Commit: $(gitShortCommit)"
+              echo "Image Tag: ${{ parameters.imageTag }}"
+            displayName: 'Display Build Information'
+
+          - task: Docker@2
+            displayName: 'Build CustomerOrder API Image'
+            inputs:
+              command: 'build'
+              repository: '${{ parameters.dockerHubUsername }}/$(customerOrderImage)'
+              dockerfile: 'CustomerOrder/Dockerfile'
+              buildContext: '.'
+              tags: |
+                ${{ parameters.imageTag }}
+                build-$(buildVersion)
+                $(gitShortCommit)
+              arguments: >
+                --build-arg BUILD_CONFIGURATION=$(buildConfiguration)
+                --build-arg BUILD_VERSION=$(buildVersion)
+                --build-arg GIT_COMMIT=$(gitShortCommit)
+
+          - task: Docker@2
+            displayName: 'Build AuthService Image'
+            inputs:
+              command: 'build'
+              repository: '${{ parameters.dockerHubUsername }}/$(authServiceImage)'
+              dockerfile: 'AuthService/Dockerfile'
+              buildContext: '.'
+              tags: |
+                ${{ parameters.imageTag }}
+                build-$(buildVersion)
+                $(gitShortCommit)
+              arguments: >
+                --build-arg BUILD_CONFIGURATION=$(buildConfiguration)
+                --build-arg BUILD_VERSION=$(buildVersion)
+                --build-arg GIT_COMMIT=$(gitShortCommit)
+
+          - script: |
+              echo "=== Built Docker Images ==="
+              docker images | grep -E '$(customerOrderImage)|$(authServiceImage)' || true
+            displayName: 'List Built Images'
+
+          - script: |
+              echo "Testing CustomerOrder API image..."
+              docker run --rm ${{ parameters.dockerHubUsername }}/$(customerOrderImage):${{ parameters.imageTag }} dotnet --version || true
+
+              echo "Testing AuthService image..."
+              docker run --rm ${{ parameters.dockerHubUsername }}/$(authServiceImage):${{ parameters.imageTag }} dotnet --version || true
+            displayName: 'Test Docker Images'
+
+      - job: PushDockerImages
+        displayName: 'Push Docker Images to Docker Hub'
+        dependsOn: BuildDockerImages
+        condition: and(succeeded(), eq('${{ parameters.pushDockerImages }}', 'true'))
+        pool:
+          vmImage: $(vmImageName)
+
+        steps:
+          - checkout: none
+
+          - task: Docker@2
+            displayName: 'Login to Docker Hub'
+            inputs:
+              command: 'login'
+              containerRegistry: 'dockerhub-connection'  # Service connection name
+
+          - task: Docker@2
+            displayName: 'Push CustomerOrder API Images'
+            inputs:
+              command: 'push'
+              repository: '${{ parameters.dockerHubUsername }}/$(customerOrderImage)'
+              tags: |
+                ${{ parameters.imageTag }}
+                build-$(buildVersion)
+                $(gitShortCommit)
+
+          - task: Docker@2
+            displayName: 'Push AuthService Images'
+            inputs:
+              command: 'push'
+              repository: '${{ parameters.dockerHubUsername }}/$(authServiceImage)'
+              tags: |
+                ${{ parameters.imageTag }}
+                build-$(buildVersion)
+                $(gitShortCommit)
+
+          - script: |
+              echo "========================================"
+              echo "Pushed Images:"
+              echo "========================================"
+              echo "CustomerOrder API:"
+              echo "  - ${{ parameters.dockerHubUsername }}/$(customerOrderImage):${{ parameters.imageTag }}"
+              echo "  - ${{ parameters.dockerHubUsername }}/$(customerOrderImage):build-$(buildVersion)"
+              echo "  - ${{ parameters.dockerHubUsername }}/$(customerOrderImage):$(gitShortCommit)"
+              echo ""
+              echo "AuthService:"
+              echo "  - ${{ parameters.dockerHubUsername }}/$(authServiceImage):${{ parameters.imageTag }}"
+              echo "  - ${{ parameters.dockerHubUsername }}/$(authServiceImage):build-$(buildVersion)"
+              echo "  - ${{ parameters.dockerHubUsername }}/$(authServiceImage):$(gitShortCommit)"
+              echo "========================================"
+            displayName: 'Display Pushed Images'
+
+      - job: CleanupDockerImages
+        displayName: 'Cleanup Docker Images'
+        dependsOn:
+          - BuildDockerImages
+          - PushDockerImages
+        condition: always()
+        pool:
+          vmImage: $(vmImageName)
+
+        steps:
+          - script: |
+              echo "Cleaning up local Docker images..."
+              docker rmi ${{ parameters.dockerHubUsername }}/$(customerOrderImage):build-$(buildVersion) || true
+              docker rmi ${{ parameters.dockerHubUsername }}/$(customerOrderImage):$(gitShortCommit) || true
+              docker rmi ${{ parameters.dockerHubUsername }}/$(authServiceImage):build-$(buildVersion) || true
+              docker rmi ${{ parameters.dockerHubUsername }}/$(authServiceImage):$(gitShortCommit) || true
+              echo "Docker cleanup completed!"
+            displayName: 'Remove Build-Specific Tags'
+
+  - stage: Summary
+    displayName: 'Pipeline Summary'
+    dependsOn:
+      - Build
+      - Docker
+    condition: always()
+    jobs:
+      - job: PipelineSummary
+        displayName: 'Display Pipeline Summary'
+        pool:
+          vmImage: $(vmImageName)
+
+        steps:
+          - checkout: none
+
+          - script: |
+              echo "========================================="
+              echo "Pipeline completed!"
+              echo "========================================="
+              echo "Build Configuration: $(buildConfiguration)"
+              echo "Build Number: $(buildVersion)"
+              echo "Git Commit: $(gitShortCommit)"
+              echo ""
+              if [ "${{ parameters.buildDockerImages }}" = "True" ] && [ "${{ parameters.pushDockerImages }}" = "True" ]; then
+                echo "Docker images are available at:"
+                echo "- https://hub.docker.com/r/${{ parameters.dockerHubUsername }}/$(customerOrderImage)"
+                echo "- https://hub.docker.com/r/${{ parameters.dockerHubUsername }}/$(authServiceImage)"
+                echo ""
+                echo "Pull commands:"
+                echo "docker pull ${{ parameters.dockerHubUsername }}/$(customerOrderImage):${{ parameters.imageTag }}"
+                echo "docker pull ${{ parameters.dockerHubUsername }}/$(authServiceImage):${{ parameters.imageTag }}"
+              fi
+              echo "========================================="
+            displayName: 'Pipeline Summary'

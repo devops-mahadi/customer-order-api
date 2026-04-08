@@ -4,17 +4,17 @@ A **.NET 10.0 ASP.NET Core Web API** for managing customers and orders with **GD
 
 ## Features
 
-- 🛒 **Customer & Order Management** - Full CRUD operations with clean architecture
-- 🔐 **JWT Authentication** - Secure token-based authentication via AuthService
-- 📜 **GDPR Compliance** - Articles 7, 17, 20, 30 implementation
+- **Customer & Order Management** - Full CRUD operations with clean architecture
+- **JWT Authentication** - Secure token-based authentication via AuthService
+- **GDPR Compliance** - Articles 7, 17, 20, 30 implementation
   - Right to Data Portability (Export)
   - Right to Erasure (Anonymization)
   - Consent Management
   - Audit Logging
-- 🗄️ **SQL Server Integration** - EF Core with migrations
-- 🐳 **Docker Support** - Complete Docker Compose setup
-- ✅ **Comprehensive Testing** - Unit and integration tests with Testcontainers
-- 📊 **Clean Architecture** - Domain, Application, Infrastructure, Presentation layers
+- **SQL Server Integration** - EF Core with migrations
+- **Docker Support** - Complete Docker Compose setup
+- **Comprehensive Testing** - Unit and integration tests with Testcontainers
+- **Clean Architecture** - Domain, Application, Infrastructure, Presentation layers
 
 ## Architecture
 
@@ -35,15 +35,7 @@ AuthService/          # JWT Token Generation Service
 **Prerequisites**: Docker & Docker Compose
 
 ```bash
-# Build and start all services
-make build
-make up
-
-# Or using the shell script
-./docker.sh build
-./docker.sh up
-
-# Or using docker compose directly
+using docker compose directly
 docker compose build
 docker compose up -d
 ```
@@ -53,8 +45,6 @@ docker compose up -d
 - AuthService: http://localhost:5001
 - MSSQL: localhost:1433
 
-📖 **Full Docker documentation**: [DOCKER.md](DOCKER.md)
-
 ### Option 2: Local Development
 
 **Prerequisites**: .NET 10.0 SDK, SQL Server
@@ -62,9 +52,6 @@ docker compose up -d
 ```bash
 # Restore dependencies
 dotnet restore
-
-# Update database
-dotnet ef database update --project CustomerOrder
 
 # Run AuthService
 dotnet run --project AuthService
@@ -116,7 +103,7 @@ curl -X POST http://localhost:8080/api/customers/john.doe@example.com/consents \
   }'
 ```
 
-📄 **Full API documentation**: Use Swagger at http://localhost:8080/swagger
+**Full API documentation**: Use Swagger at http://localhost:8080/swagger
 
 ## API Endpoints
 
@@ -171,43 +158,6 @@ dotnet test --filter "Category=Integration"
 dotnet test /p:CollectCoverage=true
 ```
 
-## Project Structure
-
-```
-customer-order-api/
-├── CustomerOrder/                    # Main API Project
-│   ├── Domain/                      # Core business logic
-│   │   ├── Entities/               # Domain entities
-│   │   ├── Interfaces/             # Repository interfaces
-│   │   └── Constants/              # Application constants
-│   ├── Application/                 # Business logic layer
-│   │   ├── Services/               # Service implementations
-│   │   └── Interfaces/             # Service interfaces
-│   ├── Infrastructure/              # Data access layer
-│   │   ├── Persistence/            # DbContext & configurations
-│   │   ├── Repositories/           # Repository implementations
-│   │   └── Middleware/             # Custom middleware
-│   └── Presentation/                # API layer
-│       ├── Controllers/            # API endpoints
-│       └── DTOs/                   # Request/Response models
-│
-├── AuthService/                     # JWT Authentication Service
-│   ├── Controllers/                # Auth endpoints
-│   ├── Services/                   # JWT generation
-│   └── DTOs/                       # Auth models
-│
-├── CustomerOrder.Tests/             # Test project
-│   ├── Unit/                       # Unit tests
-│   │   └── Services/
-│   └── Integration/                # Integration tests
-│       └── Container/              # Testcontainers tests
-│
-├── docker-compose.yml              # Docker Compose configuration
-├── Makefile                        # Convenient build commands
-├── docker.sh                       # Cross-platform helper script
-└── DOCKER.md                       # Docker documentation
-```
-
 ## Technology Stack
 
 - **.NET 10.0** - Latest .NET framework
@@ -221,6 +171,7 @@ customer-order-api/
 - **Testcontainers** - Integration testing with real databases
 - **Docker** - Containerization
 - **Swagger/OpenAPI** - API documentation
+- **Jenkins/Azure-DevOps** - CI/CD pipline file
 
 ## GDPR Compliance
 
@@ -311,25 +262,21 @@ docker compose down
 
 The project includes complete CI/CD pipeline configurations:
 
-### Jenkins Pipeline
-
-Automated pipeline with Docker Hub integration:
-- ✅ Build and test .NET solution
-- ✅ Run unit and integration tests with coverage
-- ✅ Build Docker images (CustomerOrder + AuthService)
-- ✅ Push images to Docker Hub with multiple tags
-- ✅ Automated cleanup and deployment
+### Jenkins Pipeline & Azure DevOps Pipeline
 
 **Pipeline Features**:
-- Multi-stage builds
-- Docker image tagging (latest, build-number, git-commit)
-- Code coverage reports
-- Conditional deployment
-- Security scanning ready
-
-### Azure Pipelines
-
-Cloud CI/CD configuration available in `azure-pipelines.yml`
+1. Code checkout from Git
+2. .NET dependency restoration
+3. Solution build (Release configuration)
+4. Unit tests execution
+5. Integration tests execution
+6. Code coverage report generation
+7. **Docker image building** (CustomerOrder + AuthService)
+8. **Docker image testing**
+9. **Docker image pushing to Docker Hub**
+10. Test results publishing
+11. Cleanup
+```
 
 ## License
 
@@ -343,11 +290,6 @@ This project is for educational/demonstration purposes.
 4. Add tests
 5. Run `dotnet format`
 6. Submit a pull request
-
-## Support
-
-For issues or questions:
-- Check the [DOCKER.md](DOCKER.md) for Docker-related issues
 
 ---
 
