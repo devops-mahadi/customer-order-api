@@ -8,15 +8,23 @@ using Moq;
 
 namespace CustomerOrder.Tests.Unit.Services;
 
+[Trait("Category", "Unit")]
 public class CustomerServiceTests
 {
-    private readonly Mock<ICustomerRepository> _mockRepository;
+    private readonly Mock<ICustomerRepository> _mockCustomerRepository;
+    private readonly Mock<IOrderRepository> _mockOrderRepository;
+    private readonly Mock<IConsentRepository> _mockConsentRepository;
     private readonly CustomerService _service;
 
     public CustomerServiceTests()
     {
-        _mockRepository = new Mock<ICustomerRepository>();
-        _service = new CustomerService(_mockRepository.Object);
+        _mockCustomerRepository = new Mock<ICustomerRepository>();
+        _mockOrderRepository = new Mock<IOrderRepository>();
+        _mockConsentRepository = new Mock<IConsentRepository>();
+        _service = new CustomerService(
+            _mockCustomerRepository.Object,
+            _mockOrderRepository.Object,
+            _mockConsentRepository.Object);
     }
 
     #region CreateAsync Tests
@@ -33,9 +41,9 @@ public class CustomerServiceTests
             PhoneNumber = "123-456-7890"
         };
 
-        _mockRepository.Setup(x => x.EmailExistsAsync(request.Email))
+        _mockCustomerRepository.Setup(x => x.EmailExistsAsync(request.Email))
             .ReturnsAsync(false);
-        _mockRepository.Setup(x => x.CreateAsync(It.IsAny<Customer>()))
+        _mockCustomerRepository.Setup(x => x.CreateAsync(It.IsAny<Customer>()))
             .ReturnsAsync(true);
 
         // Act
@@ -43,7 +51,7 @@ public class CustomerServiceTests
 
         // Assert
         result.Should().BeTrue();
-        _mockRepository.Verify(x => x.CreateAsync(It.Is<Customer>(
+        _mockCustomerRepository.Verify(x => x.CreateAsync(It.Is<Customer>(
             c => c.Email == request.Email &&
                  c.FirstName == request.FirstName &&
                  c.LastName == request.LastName &&
@@ -61,7 +69,7 @@ public class CustomerServiceTests
             LastName = "Doe"
         };
 
-        _mockRepository.Setup(x => x.EmailExistsAsync(request.Email))
+        _mockCustomerRepository.Setup(x => x.EmailExistsAsync(request.Email))
             .ReturnsAsync(true);
 
         // Act & Assert
@@ -70,7 +78,7 @@ public class CustomerServiceTests
 
         exception.Message.Should().Contain("already exists");
         exception.Message.Should().Contain(request.Email);
-        _mockRepository.Verify(x => x.CreateAsync(It.IsAny<Customer>()), Times.Never);
+        _mockCustomerRepository.Verify(x => x.CreateAsync(It.IsAny<Customer>()), Times.Never);
     }
 
     [Fact]
@@ -85,9 +93,9 @@ public class CustomerServiceTests
             PhoneNumber = null
         };
 
-        _mockRepository.Setup(x => x.EmailExistsAsync(request.Email))
+        _mockCustomerRepository.Setup(x => x.EmailExistsAsync(request.Email))
             .ReturnsAsync(false);
-        _mockRepository.Setup(x => x.CreateAsync(It.IsAny<Customer>()))
+        _mockCustomerRepository.Setup(x => x.CreateAsync(It.IsAny<Customer>()))
             .ReturnsAsync(true);
 
         // Act
@@ -95,7 +103,7 @@ public class CustomerServiceTests
 
         // Assert
         result.Should().BeTrue();
-        _mockRepository.Verify(x => x.CreateAsync(It.Is<Customer>(
+        _mockCustomerRepository.Verify(x => x.CreateAsync(It.Is<Customer>(
             c => c.PhoneNumber == string.Empty)), Times.Once);
     }
 
@@ -119,7 +127,7 @@ public class CustomerServiceTests
             LastUpdatedAt = DateTime.UtcNow
         };
 
-        _mockRepository.Setup(x => x.GetByEmailAsync(email))
+        _mockCustomerRepository.Setup(x => x.GetByEmailAsync(email))
             .ReturnsAsync(customer);
 
         // Act
@@ -139,7 +147,7 @@ public class CustomerServiceTests
     {
         // Arrange
         var email = "nonexistent@example.com";
-        _mockRepository.Setup(x => x.GetByEmailAsync(email))
+        _mockCustomerRepository.Setup(x => x.GetByEmailAsync(email))
             .ReturnsAsync((Customer?)null);
 
         // Act
@@ -179,7 +187,7 @@ public class CustomerServiceTests
             }
         };
 
-        _mockRepository.Setup(x => x.GetAllAsync())
+        _mockCustomerRepository.Setup(x => x.GetAllAsync())
             .ReturnsAsync(customers);
 
         // Act
@@ -196,7 +204,7 @@ public class CustomerServiceTests
     public async Task GetAllAsync_EmptyList_ReturnsEmptyCollection()
     {
         // Arrange
-        _mockRepository.Setup(x => x.GetAllAsync())
+        _mockCustomerRepository.Setup(x => x.GetAllAsync())
             .ReturnsAsync(new List<Customer>());
 
         // Act
@@ -233,9 +241,9 @@ public class CustomerServiceTests
             PhoneNumber = "222-2222"
         };
 
-        _mockRepository.Setup(x => x.GetByEmailAsync(email))
+        _mockCustomerRepository.Setup(x => x.GetByEmailAsync(email))
             .ReturnsAsync(existingCustomer);
-        _mockRepository.Setup(x => x.UpdateAsync(It.IsAny<Customer>()))
+        _mockCustomerRepository.Setup(x => x.UpdateAsync(It.IsAny<Customer>()))
             .ReturnsAsync(true);
 
         // Act
@@ -247,7 +255,7 @@ public class CustomerServiceTests
         existingCustomer.LastName.Should().Be(updateRequest.LastName);
         existingCustomer.PhoneNumber.Should().Be(updateRequest.PhoneNumber);
         existingCustomer.LastUpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
-        _mockRepository.Verify(x => x.UpdateAsync(existingCustomer), Times.Once);
+        _mockCustomerRepository.Verify(x => x.UpdateAsync(existingCustomer), Times.Once);
     }
 
     [Fact]
@@ -261,7 +269,7 @@ public class CustomerServiceTests
             LastName = "Name"
         };
 
-        _mockRepository.Setup(x => x.GetByEmailAsync(email))
+        _mockCustomerRepository.Setup(x => x.GetByEmailAsync(email))
             .ReturnsAsync((Customer?)null);
 
         // Act
@@ -269,7 +277,7 @@ public class CustomerServiceTests
 
         // Assert
         result.Should().BeFalse();
-        _mockRepository.Verify(x => x.UpdateAsync(It.IsAny<Customer>()), Times.Never);
+        _mockCustomerRepository.Verify(x => x.UpdateAsync(It.IsAny<Customer>()), Times.Never);
     }
 
     [Fact]
@@ -295,9 +303,9 @@ public class CustomerServiceTests
             PhoneNumber = null
         };
 
-        _mockRepository.Setup(x => x.GetByEmailAsync(email))
+        _mockCustomerRepository.Setup(x => x.GetByEmailAsync(email))
             .ReturnsAsync(existingCustomer);
-        _mockRepository.Setup(x => x.UpdateAsync(It.IsAny<Customer>()))
+        _mockCustomerRepository.Setup(x => x.UpdateAsync(It.IsAny<Customer>()))
             .ReturnsAsync(true);
 
         // Act
@@ -326,9 +334,9 @@ public class CustomerServiceTests
             LastUpdatedAt = DateTime.UtcNow
         };
 
-        _mockRepository.Setup(x => x.GetByEmailAsync(email))
+        _mockCustomerRepository.Setup(x => x.GetByEmailAsync(email))
             .ReturnsAsync(customer);
-        _mockRepository.Setup(x => x.DeleteAsync(customer))
+        _mockCustomerRepository.Setup(x => x.DeleteAsync(customer))
             .ReturnsAsync(true);
 
         // Act
@@ -336,7 +344,7 @@ public class CustomerServiceTests
 
         // Assert
         result.Should().BeTrue();
-        _mockRepository.Verify(x => x.DeleteAsync(customer), Times.Once);
+        _mockCustomerRepository.Verify(x => x.DeleteAsync(customer), Times.Once);
     }
 
     [Fact]
@@ -344,7 +352,7 @@ public class CustomerServiceTests
     {
         // Arrange
         var email = "nonexistent@example.com";
-        _mockRepository.Setup(x => x.GetByEmailAsync(email))
+        _mockCustomerRepository.Setup(x => x.GetByEmailAsync(email))
             .ReturnsAsync((Customer?)null);
 
         // Act
@@ -352,7 +360,7 @@ public class CustomerServiceTests
 
         // Assert
         result.Should().BeFalse();
-        _mockRepository.Verify(x => x.DeleteAsync(It.IsAny<Customer>()), Times.Never);
+        _mockCustomerRepository.Verify(x => x.DeleteAsync(It.IsAny<Customer>()), Times.Never);
     }
 
     #endregion
