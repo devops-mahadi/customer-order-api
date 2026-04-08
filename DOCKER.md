@@ -89,9 +89,9 @@ Once running, the services are available at:
 ### 1. Generate JWT Token
 
 ```bash
-curl -X POST http://localhost:5001/api/auth/login \
+curl -X POST http://localhost:7080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","role":"Admin"}'
+  -d '{"email":"admin@example.com","password":"admin123"}'
 ```
 
 Response:
@@ -106,14 +106,14 @@ Response:
 
 ```bash
 # Replace {TOKEN} with the actual token from step 1
-curl -X GET http://localhost:5000/api/customers \
+curl -X GET http://localhost:8080/api/customers \
   -H "Authorization: Bearer {TOKEN}"
 ```
 
 ### 3. Create a Customer
 
 ```bash
-curl -X POST http://localhost:5000/api/customers \
+curl -X POST http://localhost:8080/api/customers \
   -H "Authorization: Bearer {TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{

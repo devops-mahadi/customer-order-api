@@ -66,7 +66,7 @@ dotnet run --project CustomerOrder
 ```bash
 curl -X POST http://localhost:7080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","role":"Admin"}'
+  -d '{"email":"admin@example.com","password":"admin123"}'
 ```
 
 ### 2. Create a Customer
