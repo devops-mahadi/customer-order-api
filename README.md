@@ -279,7 +279,9 @@ The project includes complete CI/CD pipeline configurations:
 
 ## License
 
-This project is for educational/demonstration purposes.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+**Note:** This project is for educational/demonstration purposes only.
 
 ## Contributing
 
